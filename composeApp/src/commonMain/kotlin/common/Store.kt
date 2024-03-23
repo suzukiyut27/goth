@@ -2,6 +2,7 @@ package common
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 abstract class Store<S : State, A : Action>(
     private val middleware: Middleware<S, A>,
@@ -11,7 +12,7 @@ abstract class Store<S : State, A : Action>(
         replay = 1,
         extraBufferCapacity = 0
     )
-    val states: Flow<S?> get() = _state
+    val states: Flow<S?> get() = _state.distinctUntilChanged()
 
     fun dispatch(action: A) {
         middleware.apply(_state.replayCache.firstOrNull(), action) {

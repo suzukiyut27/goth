@@ -24,45 +24,60 @@ import presentation.common.ProgressIndicator
 
 @Composable
 fun MainScreen(store: MainStore) {
-    val mainState = store.states.collectAsState(initial = MainState(null, "", "")).value
+    val mainState =
+        store.states.collectAsState(initial = store.reducer.instance).value ?: MainState.Loading
     MaterialTheme {
-        val items = mainState?.items?.items
-        if (mainState != null && mainState.errorMessage.isNotBlank()) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column {
-                    Text(mainState.errorMessage)
-                    Button(onClick = { store.dispatch(MainAction.ReloadData) }) {
-                        Text("Retry")
+        when (mainState) {
+            MainState.Loading -> {
+                ProgressIndicator(modifier = Modifier)
+            }
+
+            is MainState.Error -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column {
+                        Text(mainState.errorMessage)
+                        Button(onClick = { store.dispatch(MainAction.ReloadData) }) {
+                            Text("再取得")
+                        }
                     }
                 }
             }
-        }
-        if (items == null) {
-            ProgressIndicator(modifier = Modifier)
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp)
-            ) {
-                items(items.size) { index ->
-                    Card(
-                        modifier = Modifier.fillMaxWidth().padding(8.dp)
+
+            is MainState.Success -> {
+                val items = mainState.items?.items
+                if (items == null) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth().padding(8.dp)
-                        ) {
-                            KamelImage(
-                                resource = asyncPainterResource(items[index].mediumImageUrls.lastOrNull()?.imageUrl.orEmpty()),
-                                modifier = Modifier.fillMaxSize().aspectRatio(1.5f),
-                                contentDescription = null,
-                                onLoading = {
-                                    CircularProgressIndicator()
+                        Text("表示可能なデータが存在しません。")
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp)
+                    ) {
+                        items(items.size) { index ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth().padding(8.dp)
+                            ) {
+                                Column(
+                                    modifier = Modifier.fillMaxWidth().padding(8.dp)
+                                ) {
+                                    KamelImage(
+                                        resource = asyncPainterResource(items[index].mediumImageUrls.lastOrNull()?.imageUrl.orEmpty()),
+                                        modifier = Modifier.fillMaxSize().aspectRatio(1.5f),
+                                        contentDescription = null,
+                                        onLoading = {
+                                            CircularProgressIndicator()
+                                        }
+                                    )
+                                    Text(items[index].itemName)
                                 }
-                            )
-                            Text(items[index].itemName)
+                            }
                         }
                     }
                 }

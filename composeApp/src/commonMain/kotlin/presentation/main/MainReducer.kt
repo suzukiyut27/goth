@@ -4,39 +4,40 @@ import common.Reducer
 
 class MainReducer : Reducer<MainState, MainAction> {
 
+    override val instance: MainState
+        get() = MainState.Loading
+
     override fun reduce(state: MainState?, action: MainAction): MainState {
         return when (action) {
             is MainAction.FetchItems, is MainAction.ReloadData, is MainAction.CancelScope -> {
-                state ?: INSTANCE
+                state ?: instance
             }
 
             is MainAction.FetchItemsSuccess -> {
-                state?.copy(
-                    items = action.items,
-                    keyword = action.keyword,
-                    errorMessage = ""
-                ) ?: INSTANCE.copy(
-                    items = action.items,
-                    keyword = action.keyword,
-                    errorMessage = ""
-                )
+                if (state is MainState.Success) {
+                    state.copy(
+                        items = action.items,
+                        keyword = action.keyword
+                    )
+                } else {
+                    MainState.Success(
+                        items = action.items,
+                        keyword = action.keyword
+                    )
+                }
             }
 
             is MainAction.FetchItemsFailure -> {
-                state?.copy(
-                    errorMessage = action.errorMessage
-                ) ?: INSTANCE.copy(
-                    errorMessage = action.errorMessage
-                )
+                if (state is MainState.Error) {
+                    state.copy(
+                        errorMessage = action.errorMessage
+                    )
+                } else {
+                    MainState.Error(
+                        errorMessage = action.errorMessage
+                    )
+                }
             }
         }
-    }
-
-    companion object {
-        private val INSTANCE = MainState(
-            null,
-            "",
-            ""
-        )
     }
 }

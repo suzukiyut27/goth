@@ -28,8 +28,13 @@ class MainMiddleware(
             }
 
             is MainAction.ReloadData -> {
+                val mainState = state as? MainState.Success
+                if (mainState == null) {
+                    dispatch(MainAction.FetchItemsFailure("データの取得ができませんでした。通信環境の良いところで再度お試しください。"))
+                    return
+                }
                 coroutineScope.launch {
-                    ichibaItemSearchRepository.getIchibaItemSearch(state?.keyword.orEmpty())
+                    ichibaItemSearchRepository.getIchibaItemSearch(mainState.keyword)
                         .collect { items ->
                             if (items == null) {
                                 dispatch(MainAction.FetchItemsFailure("データの取得ができませんでした。通信環境の良いところで再度お試しください。"))
@@ -37,7 +42,7 @@ class MainMiddleware(
                                 dispatch(
                                     MainAction.FetchItemsSuccess(
                                         items,
-                                        state?.keyword.orEmpty()
+                                        mainState.keyword
                                     )
                                 )
                             }
