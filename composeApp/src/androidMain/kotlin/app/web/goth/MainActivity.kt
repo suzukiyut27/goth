@@ -1,24 +1,28 @@
 package app.web.goth
 
-import App
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.Preview
+import di.startKoin
+import org.koin.java.KoinJavaComponent.inject
+import presentation.main.MainAction
+import presentation.main.MainScreen
+import presentation.main.MainStore
 
 class MainActivity : ComponentActivity() {
+
+    private val store: MainStore by inject(MainStore::class.java)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        startKoin()
+        store.dispatch(MainAction.FetchItems("楽天"))
         setContent {
-            App()
+            MainScreen(store)
         }
     }
-}
 
-@Preview
-@Composable
-fun AppAndroidPreview() {
-    App()
+    override fun onDestroy() {
+        store.dispatch(MainAction.CancelScope)
+        super.onDestroy()
+    }
 }

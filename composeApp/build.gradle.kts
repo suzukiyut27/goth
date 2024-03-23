@@ -1,9 +1,12 @@
-import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
+import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsCompose)
+    kotlin("plugin.serialization")
+    id("com.codingfeline.buildkonfig") version "+"
 }
 
 kotlin {
@@ -14,7 +17,7 @@ kotlin {
             }
         }
     }
-    
+
     listOf(
         iosX64(),
         iosArm64(),
@@ -25,12 +28,15 @@ kotlin {
             isStatic = true
         }
     }
-    
+
     sourceSets {
-        
         androidMain.dependencies {
             implementation(libs.compose.ui.tooling.preview)
             implementation(libs.androidx.activity.compose)
+            implementation(libs.ktor.client.okhttp)
+        }
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -39,6 +45,13 @@ kotlin {
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
+            implementation(libs.koin.core)
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.kotlin.serialization)
+            implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.ktor.ktor.client.logging)
+            implementation(libs.kamel.image)
         }
     }
 }
@@ -74,6 +87,30 @@ android {
     }
     dependencies {
         debugImplementation(libs.compose.ui.tooling)
+        implementation(libs.kotlinx.coroutines.android)
     }
 }
 
+
+buildkonfig {
+    packageName = "app.web.goth"
+
+    defaultConfigs {
+        buildConfigField(
+            STRING, "RAKUTEN_API_HOST",
+            "app.rakuten.co.jp"
+        )
+        buildConfigField(
+            STRING, "APPLICATION_ID",
+            gradleLocalProperties(rootDir, providers).getProperty("APPLICATION_ID")
+        )
+        buildConfigField(
+            STRING, "APPLICATION_SECRET_ID",
+            gradleLocalProperties(rootDir, providers).getProperty("APPLICATION_SECRET_ID")
+        )
+        buildConfigField(
+            STRING, "AFFILIATE_ID",
+            gradleLocalProperties(rootDir, providers).getProperty("AFFILIATE_ID")
+        )
+    }
+}
